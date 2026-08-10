@@ -106,6 +106,8 @@ Deno.serve(async (req) => {
           lugar: lead.lugar,
           fuente: lead.fuente,
           quiz: "expediente-legionario",
+          negocio: "infoproductos",
+          tipo_lead: "low_ticket",
         },
       };
       if (lead.whatsapp) perfil.phone_number = lead.whatsapp;

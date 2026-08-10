@@ -340,20 +340,20 @@
       // Si la dejas vacía, cae al modo directo: Supabase (anon) + Klaviyo (API pública) desde el navegador.
       EDGE_FUNCTION_URL: "",  // ej: "https://TU-PROYECTO.supabase.co/functions/v1/registrar-lead"
 
-      SUPABASE_URL: "https://TU-PROYECTO.supabase.co",
-      SUPABASE_ANON_KEY: "TU_ANON_KEY",
+      SUPABASE_URL: "https://hmgwiostpuxfxpvpsadu.supabase.co",
+      SUPABASE_ANON_KEY: "sb_publishable_v7R0OXEar-bYu5Me7VBMhA_m-ke3aK9",
 
-      KLAVIYO_PUBLIC_KEY: "TU_PUBLIC_KEY",   // Company/Site ID (6 caracteres)
-      KLAVIYO_LIST_ID: "TU_LIST_ID",
+      KLAVIYO_PUBLIC_KEY: "XNTv6c",   // Company/Site ID (6 caracteres)
+      KLAVIYO_LIST_ID: "R2SfGP",
 
       SHEETS_URL: "",  // respaldo opcional a tu Apps Script actual. "" = apagado
 
       URLS: {
         webinar: "https://TU-LINK-DE-REGISTRO-WEBINAR",
-        definir: "https://TU-LINK-HOTMART-DEFINICION",
-        subir:   "https://TU-LINK-HOTMART-VOLUMEN",
-        recomp:  "https://TU-LINK-HOTMART-SISTEMA-COMPLETO",
-        casa:    "https://TU-LINK-HOTMART-ENTRENA-EN-CASA",
+        definir: "https://hotmart.com/es/marketplace/productos/hagsxd-el-camino-de-hercules-ub2hf/R105050044H?sck=HOTMART_PRODUCT_PAGE",
+        subir:   "https://hotmart.com/es/marketplace/productos/el-legado-de-zeus/C105050697C",
+        recomp:  "https://hotmart.com/es/marketplace/productos/hagsxd-el-camino-de-hercules-ub2hf/R105050044H?sck=HOTMART_PRODUCT_PAGE",
+        casa:    "https://hotmart.com/es/marketplace/productos/el-ascenso-de-aquiles/V105080333I?sck=HOTMART_PRODUCT_PAGE",
         instagram: "https://www.instagram.com/bastianalmaraz/",
       },
     };
@@ -799,6 +799,7 @@
           etapa: p.etapa, programa: p.programa, tier: p.tier, lead_score: p.lead_score,
           grasa_actual: p.grasa_actual, grasa_meta: p.grasa_meta, lugar: p.lugar,
           fuente: p.fuente, quiz: 'expediente-legionario',
+          negocio: 'infoproductos', tipo_lead: 'low_ticket',
         },
       };
       if (p.whatsapp) attrs.phone_number = p.whatsapp;
