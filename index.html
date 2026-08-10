@@ -90,6 +90,7 @@
     .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--sangre), var(--brasa)); transition: width .35s; }
 
     .pregunta { font-family: var(--display); font-weight: 800; font-size: clamp(22px, 5vw, 30px); line-height: 1.15; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 10px; }
+    .pregunta .rojo { color: var(--brasa); }
     .pista { color: var(--ceniza); font-size: 14.5px; margin-bottom: 24px; }
 
     .filas { display: flex; flex-direction: column; gap: 10px; }
@@ -363,8 +364,9 @@
        r = puntos de etapa {subir, recomp, definir, sistema} · lead = score ICP
        ========================================================== */
     const CASILLAS_GRASA = [
-      { t: "10–12%", v: 11 }, { t: "~15%", v: 15 }, { t: "~20%", v: 20 },
-      { t: "~25%", v: 25 }, { t: "~30%", v: 30 }, { t: "35% o más", v: 37 },
+      { t: "3–4%", v: 3.5 }, { t: "6–7%", v: 6.5 }, { t: "10–12%", v: 11 },
+      { t: "~15%", v: 15 }, { t: "~20%", v: 20 }, { t: "~25%", v: 25 },
+      { t: "~30%", v: 30 }, { t: "~35%", v: 35 }, { t: "40% o más", v: 40 },
     ];
 
     const PREGUNTAS = [
@@ -375,7 +377,7 @@
       ]},
       { key: "grasa_actual", q: "¿En qué casilla estás hoy?", pista: "Sé honesto: el veredicto solo sirve con tu punto real de partida.", type: "lamina",
         extra: { t: "No sé ubicarme todavía", v: null } },
-      { key: "grasa_meta", q: "¿A qué casilla quieres llegar?", pista: "Tu meta visual. De la brecha entre hoy y esta casilla sale tu etapa.", type: "lamina" },
+      { key: "grasa_meta", q: "¿A qué casilla quieres <span class=\"rojo\">llegar</span>?", pista: "Tu meta visual. De la brecha entre hoy y esta casilla sale tu etapa.", type: "lamina" },
       { key: "edad", q: "¿Qué edad tienes?", type: "filas", ops: [
         { t: "Menos de 18 años", r: {}, lead: -4 },
         { t: "18–24 años", r: {}, lead: -4 },
@@ -521,7 +523,7 @@
       const pct = Math.round((idx / total) * 100);
       $('a-pct').textContent = pct + '%';
       $('a-fill').style.width = pct + '%';
-      $('q-texto').textContent = P.q;
+      $('q-texto').innerHTML = P.q;
       if (P.pista) { $('q-pista').textContent = P.pista; $('q-pista').style.display = 'block'; }
       else $('q-pista').style.display = 'none';
 
@@ -573,7 +575,7 @@
       const textos = [], enunciados = [], k = {};
 
       PREGUNTAS.forEach((P, i) => {
-        enunciados.push(P.q);
+        enunciados.push(P.q.replace(/<[^>]+>/g, ''));
         const a = resp[i];
         if (P.type === 'lamina') {
           textos.push(a ? a.t : '');
