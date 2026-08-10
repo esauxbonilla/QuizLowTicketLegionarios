@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expediente Legionario · Diagnóstico de etapa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0b0708;          /* fondo casi negro */
+      --campo: #140d0f;        /* paneles */
+      --campo-2: #1b1114;
+      --borde: #2c1a1e;
+      --sangre: #c1272d;       /* rojo Legionarios */
+      --brasa: #e63946;
+      --oro: #c9a24b;          /* el estandarte: solo para sello, tier y remates */
+      --hueso: #f2ebe4;        /* texto principal */
+      --ceniza: #a08d8f;       /* texto secundario */
+      --sombra: #6d5a5d;
+      --display: 'Cinzel', 'Times New Roman', serif;
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: 'SF Mono', 'JetBrains Mono', ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--ink); color: var(--hueso); font-family: var(--sans);
+      line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% 115%, rgba(193,39,45,.16), transparent 60%),
+        radial-gradient(ellipse 70% 40% at 50% -15%, rgba(201,162,75,.05), transparent 55%);
+    }
+
+    /* ---------- expediente: marco con esquinas ---------- */
+    .marco { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 26px 22px 80px; }
+    .doc {
+      position: relative; background: var(--campo); border: 1px solid var(--borde);
+      padding: clamp(28px, 6vw, 52px);
+    }
+    .doc::before, .doc::after,
+    .doc .esq::before, .doc .esq::after {
+      content: ""; position: absolute; width: 18px; height: 18px; border-color: var(--oro); border-style: solid;
+    }
+    .doc::before      { top: -1px; left: -1px;  border-width: 2px 0 0 2px; }
+    .doc::after       { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+    .doc .esq::before { bottom: -1px; left: -1px;  border-width: 0 0 2px 2px; }
+    .doc .esq::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .membrete { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 34px; }
+    .membrete .marca { font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: 5px; color: var(--hueso); text-transform: uppercase; }
+    .membrete .marca span { color: var(--sangre); }
+    .membrete .folio { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--sombra); text-transform: uppercase; text-align: right; }
+
+    .pantalla { display: none; }
+    .pantalla.activa { display: block; animation: entra .28s ease; }
+    @keyframes entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .pantalla.activa { animation: none; } }
+
+    /* ---------- tipografía ---------- */
+    .fase { font-family: var(--mono); font-size: 11px; letter-spacing: 4px; color: var(--brasa); text-transform: uppercase; margin-bottom: 16px; }
+    h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 6.6vw, 46px); line-height: 1.08; letter-spacing: .5px; text-transform: uppercase; }
+    h1 .rojo { color: var(--brasa); }
+    .intro-lead { color: var(--ceniza); font-size: 16.5px; margin: 22px 0 6px; }
+    .intro-lead b { color: var(--hueso); font-weight: 600; }
+    .regla { height: 1px; background: linear-gradient(90deg, var(--oro), transparent 70%); margin: 26px 0; opacity: .5; }
+    .nota-filtro { border-left: 2px solid var(--sangre); padding: 14px 18px; background: var(--campo-2); color: var(--ceniza); font-size: 14.5px; margin-bottom: 30px; }
+    .nota-filtro b { color: var(--hueso); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
+      background: var(--sangre); color: #fff; border: none; text-decoration: none;
+      font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: 3px; text-transform: uppercase;
+      padding: 18px 32px; transition: .15s;
+    }
+    .btn:hover { background: var(--brasa); transform: translateY(-2px); }
+    .btn:disabled { opacity: .5; cursor: wait; transform: none; }
+    .btn.oro { background: transparent; color: var(--oro); border: 1px solid var(--oro); }
+    .btn.oro:hover { background: rgba(201,162,75,.08); transform: none; }
+    .micro { font-family: var(--mono); font-size: 10.5px; letter-spacing: 2px; color: var(--sombra); text-transform: uppercase; margin-top: 16px; }
+
+    /* ---------- progreso ---------- */
+    .avance { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 11px; letter-spacing: 3px; color: var(--ceniza); text-transform: uppercase; margin-bottom: 10px; }
+    .avance .num { font-family: var(--display); font-weight: 800; font-size: 14px; color: var(--oro); letter-spacing: 2px; }
+    .barra { height: 3px; background: var(--borde); margin-bottom: 36px; position: relative; }
+    .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--sangre), var(--brasa)); transition: width .35s; }
+
+    .pregunta { font-family: var(--display); font-weight: 800; font-size: clamp(22px, 5vw, 30px); line-height: 1.15; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 10px; }
+    .pista { color: var(--ceniza); font-size: 14.5px; margin-bottom: 24px; }
+
+    .filas { display: flex; flex-direction: column; gap: 10px; }
+    .fila {
+      display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; cursor: pointer;
+      background: transparent; border: 1px solid var(--borde); color: var(--hueso);
+      font-family: var(--sans); font-size: 15.5px; padding: 16px 18px; transition: .12s;
+    }
+    .fila:hover, .fila:focus-visible { border-color: var(--sangre); background: var(--campo-2); outline: none; }
+    .fila.elegida { border-color: var(--brasa); background: var(--campo-2); }
+    .fila .rom { font-family: var(--display); font-weight: 600; font-size: 13px; color: var(--oro); min-width: 34px; letter-spacing: 1px; }
+
+    /* ---------- lámina de reconocimiento (tabla de grasa) ---------- */
+    .lamina { border: 1px solid var(--borde); background: #000; margin-bottom: 18px; position: relative; }
+    .lamina img { display: block; width: 100%; height: auto; }
+    .lamina .vacia { padding: 40px 20px; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: var(--sombra); text-transform: uppercase; }
+    .lamina .titulo-lamina { position: absolute; top: 10px; left: 12px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 3px; color: var(--oro); text-transform: uppercase; background: rgba(0,0,0,.55); padding: 4px 8px; }
+    .casillas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .casilla {
+      cursor: pointer; background: transparent; border: 1px solid var(--borde); color: var(--hueso);
+      font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: 1px;
+      padding: 15px 6px; text-align: center; transition: .12s;
+    }
+    .casilla:hover, .casilla:focus-visible { border-color: var(--oro); color: var(--oro); background: var(--campo-2); outline: none; }
+    .casilla.ancha { grid-column: 1 / -1; font-family: var(--sans); font-weight: 400; font-size: 14px; color: var(--ceniza); letter-spacing: 0; }
+
+    .volver { background: none; border: none; margin-top: 30px; color: var(--sombra); font-family: var(--mono); font-size: 11px; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; }
+    .volver:hover { color: var(--brasa); }
+
+    /* ---------- registro (contacto) ---------- */
+    .campo-f { margin-bottom: 16px; }
+    .campo-f label { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 2px; color: var(--ceniza); text-transform: uppercase; margin-bottom: 7px; }
+    .campo-f input {
+      width: 100%; background: var(--ink); border: 1px solid var(--borde); color: var(--hueso);
+      font-family: var(--sans); font-size: 16px; padding: 15px 16px; transition: .12s;
+    }
+    .campo-f input:focus { outline: none; border-color: var(--oro); }
+    .campo-f .error { display: none; color: var(--brasa); font-size: 13px; margin-top: 5px; }
+    .campo-f.mal input { border-color: var(--brasa); }
+    .campo-f.mal .error { display: block; }
+    .letra-chica { font-size: 12.5px; color: var(--sombra); margin: 12px 0 24px; }
+
+    /* ---------- veredicto ---------- */
+    .sello {
+      width: 118px; height: 118px; margin: 0 auto 26px; border-radius: 50%;
+      border: 2px solid var(--oro); display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; box-shadow: 0 0 0 5px var(--campo), 0 0 0 6px rgba(201,162,75,.35);
+      transform: rotate(-6deg);
+    }
+    .sello .aro { position: absolute; inset: 7px; border: 1px solid rgba(201,162,75,.5); border-radius: 50%; }
+    .sello .clave { font-family: var(--display); font-weight: 800; font-size: 17px; letter-spacing: 2px; color: var(--oro); }
+    .sello .mini { font-family: var(--mono); font-size: 7.5px; letter-spacing: 2.5px; color: var(--oro); text-transform: uppercase; margin-top: 3px; opacity: .85; }
+    .veredicto-titulo { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 6.4vw, 44px); line-height: 1.05; text-transform: uppercase; text-align: center; margin-bottom: 18px; }
+    .veredicto-titulo .rojo { color: var(--brasa); }
+    .veredicto-texto { color: var(--ceniza); font-size: 16px; text-align: center; max-width: 480px; margin: 0 auto 30px; }
+    .veredicto-texto b { color: var(--hueso); }
+
+    .indice { border: 1px solid var(--borde); background: var(--campo-2); padding: 24px; margin-bottom: 28px; }
+    .indice h3 { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; color: var(--oro); text-transform: uppercase; margin-bottom: 16px; }
+    .indice ol { list-style: none; }
+    .indice li { display: flex; gap: 14px; padding: 11px 0; border-top: 1px solid var(--borde); font-size: 15px; color: var(--hueso); }
+    .indice li:first-child { border-top: none; padding-top: 0; }
+    .indice li .n { font-family: var(--display); font-weight: 600; font-size: 13px; color: var(--brasa); min-width: 26px; padding-top: 2px; }
+    .indice li b { color: #fff; font-weight: 600; }
+
+    .cta-centro { text-align: center; }
+    .cta-centro .programa { color: var(--ceniza); font-size: 15.5px; margin-bottom: 18px; }
+    .cta-centro .programa b { color: var(--hueso); }
+
+    .dm-caja { border: 1px dashed rgba(201,162,75,.5); padding: 18px 20px; margin: 34px 0 18px; text-align: center; color: var(--ceniza); font-size: 15px; }
+    .dm-caja .palabra { display: inline-block; font-family: var(--display); font-weight: 800; font-size: 18px; letter-spacing: 3px; color: var(--oro); border: 1px solid var(--oro); padding: 3px 14px; margin: 0 5px; }
+    .dm-nota { font-size: 13.5px; color: var(--sombra); text-align: center; margin-bottom: 18px; }
+    .estado-guardado { font-family: var(--mono); font-size: 10.5px; letter-spacing: 2px; color: var(--sombra); text-transform: uppercase; text-align: center; margin-top: 26px; }
+    .estado-guardado.ok { color: #4ade80; }
+
+    /* ------- forja (armando tu ruta) ------- */
+    .forja { padding: 60px 0; text-align: left; }
+    .forja h2 { font-family: var(--display); font-weight: 800; font-size: clamp(24px, 5.6vw, 34px); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 30px; }
+    .forja h2 .rojo { color: var(--brasa); }
+    .forja-linea { display: flex; align-items: baseline; gap: 12px; font-family: var(--mono); font-size: 13px; letter-spacing: 1px; color: var(--ceniza); padding: 9px 0; border-bottom: 1px solid var(--borde); opacity: 0; transform: translateY(6px); transition: .3s; }
+    .forja-linea.viva { opacity: 1; transform: none; }
+    .forja-linea .tick { color: var(--oro); flex: none; }
+    .forja-barra { height: 3px; background: var(--borde); margin-top: 34px; }
+    .forja-barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--sangre), var(--oro)); transition: width 2.6s linear; }
+
+    /* ------- ruta en el programa ------- */
+    .ruta { border: 1px solid var(--borde); background: var(--campo-2); padding: 24px; margin-bottom: 28px; }
+    .ruta h3 { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; color: var(--oro); text-transform: uppercase; margin-bottom: 6px; }
+    .ruta .ruta-sub { font-size: 13.5px; color: var(--sombra); margin-bottom: 16px; }
+    .ruta ul { list-style: none; }
+    .ruta li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--borde); font-size: 14.5px; color: var(--hueso); }
+    .ruta li:first-child { border-top: none; padding-top: 0; }
+    .ruta li.entrada { background: rgba(193,39,45,.08); margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-left: 2px solid var(--brasa); }
+    .ruta .tag { flex: none; font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--borde); color: var(--sombra); margin-top: 2px; white-space: nowrap; }
+    .ruta .tag.roja { border-color: var(--brasa); color: var(--brasa); }
+    .ruta .tag.oro2 { border-color: var(--oro); color: var(--oro); }
+    .ruta .tag.fantasma { visibility: hidden; }
+    .ruta .accion { display: block; font-weight: 600; color: var(--hueso); }
+    .ruta .modulo { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .5px; color: var(--sombra); margin-top: 3px; }
+    .ruta .nota-ruta { font-size: 13px; color: var(--ceniza); border-left: 2px solid var(--oro); padding: 10px 14px; margin-top: 16px; background: rgba(201,162,75,.05); }
+
+    @media (max-width: 520px) {
+      .marco { padding: 14px 10px 60px; }
+      .doc { padding: 26px 18px; }
+      .btn { width: 100%; }
+      .casillas { grid-template-columns: repeat(2, 1fr); }
+      .membrete { flex-direction: column; gap: 4px; }
+      .membrete .folio { text-align: left; }
+      .ruta li { flex-direction: column; gap: 6px; }
+      .ruta .tag { align-self: flex-start; white-space: normal; }
+      .ruta .tag.fantasma { display: none; }
+      .indice li { font-size: 14.5px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="marco">
+    <div class="doc"><span class="esq"></span>
+
+      <div class="membrete">
+        <div class="marca">Legiona<span>rios</span></div>
+        <div class="folio">Expediente de diagnóstico<br /><span id="folio-num"></span></div>
+      </div>
+
+      <!-- ============ PORTADA ============ -->
+      <section class="pantalla activa" id="p-portada">
+        <div class="fase">Fase I · Reconocimiento</div>
+        <h1>¿Definir, subir<br />o <span class="rojo">recomponer?</span></h1>
+        <p class="intro-lead">Ubícate en la lámina de grasa corporal, responde <b>10 preguntas</b> y este expediente te entrega tu etapa exacta más tu <b>Índice de Arranque</b>: por dónde empezar, con qué frecuencia y tu primer checkpoint.</p>
+        <div class="regla"></div>
+        <div class="nota-filtro">Esto no es una rutina genérica. Es el diagnóstico para dejar de entrenar a ciegas: <b>la preparación derrota la suerte.</b></div>
+        <button class="btn" onclick="iniciar()">Abrir mi expediente</button>
+        <div class="micro">10 preguntas · Veredicto inmediato · Llega también a tu correo</div>
+      </section>
+
+      <!-- ============ PREGUNTAS ============ -->
+      <section class="pantalla" id="p-quiz">
+        <div class="avance">
+          <span>Pregunta <span class="num" id="a-rom">I</span> de <span class="num" id="a-total">X</span></span>
+          <span id="a-pct">0%</span>
+        </div>
+        <div class="barra"><i id="a-fill"></i></div>
+
+        <h2 class="pregunta" id="q-texto"></h2>
+        <p class="pista" id="q-pista" style="display:none"></p>
+
+        <div class="lamina" id="lamina" style="display:none">
+          <span class="titulo-lamina">Lámina de reconocimiento · % de grasa</span>
+          <img id="lamina-img" src="tabla-grasa.jpg" alt="Tabla de porcentaje de grasa corporal"
+               onerror="this.style.display='none';document.getElementById('lamina-vacia').style.display='block'" />
+          <div class="vacia" id="lamina-vacia" style="display:none">[ Coloca aquí la imagen: tabla-grasa.jpg — la tabla del 8% al 22%+ ]</div>
+        </div>
+
+        <div class="filas" id="filas"></div>
+        <div class="casillas" id="casillas" style="display:none"></div>
+
+        <button class="volver" id="btn-volver" onclick="anterior()" style="display:none">← Anterior</button>
+      </section>
+
+      <!-- ============ REGISTRO ============ -->
+      <section class="pantalla" id="p-registro">
+        <div class="fase">Fase II · Registro</div>
+        <h2 class="pregunta">Sella tu expediente</h2>
+        <p class="pista" style="display:block">Tu etapa + tu Índice de Arranque quedan guardados y te llegan por correo, para que no dependas de una captura.</p>
+
+        <div class="campo-f" id="c-nombre">
+          <label for="i-nombre">Tu nombre</label>
+          <input id="i-nombre" type="text" autocomplete="given-name" placeholder="¿Cómo te llamas?" />
+          <div class="error">Pon tu nombre.</div>
+        </div>
+        <div class="campo-f" id="c-email">
+          <label for="i-email">Tu correo (obligatorio)</label>
+          <input id="i-email" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.com" />
+          <div class="error">Ese correo no se ve válido.</div>
+        </div>
+        <div class="campo-f" id="c-wa">
+          <label for="i-wa">Tu WhatsApp (opcional · 10 dígitos)</label>
+          <input id="i-wa" type="tel" autocomplete="tel" inputmode="numeric" placeholder="55 1234 5678" />
+          <div class="error">Escríbelo a 10 dígitos, sin +52.</div>
+        </div>
+        <p class="letra-chica">Tus datos solo se usan para enviarte tu diagnóstico y avisos de Legionarios. Cero spam.</p>
+
+        <button class="btn" id="btn-sellar" onclick="sellar()">Ver mi veredicto</button>
+        <br /><button class="volver" onclick="volverQuiz()">← Anterior</button>
+      </section>
+
+      <!-- ============ FORJA (armando tu ruta) ============ -->
+      <section class="pantalla" id="p-forja">
+        <div class="forja">
+          <h2>Forjando <span class="rojo">tu ruta</span>…</h2>
+          <div id="forja-lineas"></div>
+          <div class="forja-barra"><i id="forja-fill"></i></div>
+        </div>
+      </section>
+
+      <!-- ============ VEREDICTO ============ -->
+      <section class="pantalla" id="p-veredicto">
+        <div class="sello"><span class="aro"></span><span class="clave" id="sello-clave"></span><span class="mini">Legionarios</span></div>
+        <h2 class="veredicto-titulo" id="v-titulo"></h2>
+        <p class="veredicto-texto" id="v-texto"></p>
+
+        <div class="indice">
+          <h3>Tu Índice de Arranque</h3>
+          <ol id="v-indice"></ol>
+        </div>
+
+        <div class="ruta">
+          <h3 id="ruta-titulo">Tu ruta en el programa</h3>
+          <p class="ruta-sub">El temario real del programa, marcado en el orden exacto en que TÚ lo vas a recorrer.</p>
+          <ul id="ruta-lista"></ul>
+          <div class="nota-ruta" id="ruta-nota" style="display:none"></div>
+        </div>
+
+        <div class="cta-centro">
+          <p class="programa" id="v-programa"></p>
+          <a class="btn" id="v-cta" href="#" target="_blank" rel="noopener"></a>
+        </div>
+
+        <div id="dm-bloque">
+          <div class="dm-caja">¿No estás seguro de tu casilla en la lámina? Manda la palabra <span class="palabra" id="v-palabra"></span> por DM</div>
+          <p class="dm-nota">📸 Toma captura de este veredicto y envíala junto con la palabra — te confirmamos tu etapa.</p>
+          <div class="cta-centro"><a class="btn oro" id="v-ig" href="#" target="_blank" rel="noopener">Ir al Instagram de Bastián</a></div>
+        </div>
+
+        <div class="estado-guardado" id="estado-guardado">Guardando tu expediente…</div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Supabase JS (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    /* ==========================================================
+       CONFIG — EDITAR ANTES DE PUBLICAR
+       ========================================================== */
+    const CONFIG = {
+      // "lanzamiento" = CTA al registro del webinar · "evergreen" = CTA directo al checkout
+      MODE: "lanzamiento",
+
+      // true = muestra la caja "manda tu palabra/foto por DM" en el veredicto.
+      // Apagado por ahora para no recibir mensajes; se prende cambiando a true.
+      MOSTRAR_DM: false,
+
+      // Backend (recomendado): URL de tu Edge Function de Supabase.
+      // Si la llenas, el quiz manda TODO por ahí (BD + Klaviyo con llave privada, servidor).
+      // Si la dejas vacía, cae al modo directo: Supabase (anon) + Klaviyo (API pública) desde el navegador.
+      EDGE_FUNCTION_URL: "",  // ej: "https://TU-PROYECTO.supabase.co/functions/v1/registrar-lead"
+
+      SUPABASE_URL: "https://TU-PROYECTO.supabase.co",
+      SUPABASE_ANON_KEY: "TU_ANON_KEY",
+
+      KLAVIYO_PUBLIC_KEY: "TU_PUBLIC_KEY",   // Company/Site ID (6 caracteres)
+      KLAVIYO_LIST_ID: "TU_LIST_ID",
+
+      SHEETS_URL: "",  // respaldo opcional a tu Apps Script actual. "" = apagado
+
+      URLS: {
+        webinar: "https://TU-LINK-DE-REGISTRO-WEBINAR",
+        definir: "https://TU-LINK-HOTMART-DEFINICION",
+        subir:   "https://TU-LINK-HOTMART-VOLUMEN",
+        recomp:  "https://TU-LINK-HOTMART-SISTEMA-COMPLETO",
+        casa:    "https://TU-LINK-HOTMART-ENTRENA-EN-CASA",
+        instagram: "https://www.instagram.com/bastianalmaraz/",
+      },
+    };
+
+    /* ==========================================================
+       PREGUNTAS · type "filas" (lista) | "lamina" (tabla de grasa)
+       r = puntos de etapa {subir, recomp, definir, sistema} · lead = score ICP
+       ========================================================== */
+    const CASILLAS_GRASA = [
+      { t: "10–12%", v: 11 }, { t: "~15%", v: 15 }, { t: "~20%", v: 20 },
+      { t: "~25%", v: 25 }, { t: "~30%", v: 30 }, { t: "35% o más", v: 37 },
+    ];
+
+    const PREGUNTAS = [
+      { key: "lugar", q: "¿Dónde vas a entrenar?", type: "filas", ops: [
+        { t: "En un gimnasio", r: {}, lead: 0 },
+        { t: "En casa (sin equipo o con equipo básico)", r: {}, lead: 0 },
+        { t: "Una mezcla de los dos", r: {}, lead: 0 },
+      ]},
+      { key: "grasa_actual", q: "¿En qué casilla estás hoy?", pista: "Sé honesto: el veredicto solo sirve con tu punto real de partida.", type: "lamina",
+        extra: { t: "No sé ubicarme todavía", v: null } },
+      { key: "grasa_meta", q: "¿A qué casilla quieres llegar?", pista: "Tu meta visual. De la brecha entre hoy y esta casilla sale tu etapa.", type: "lamina" },
+      { key: "edad", q: "¿Qué edad tienes?", type: "filas", ops: [
+        { t: "Menos de 18 años", r: {}, lead: -4 },
+        { t: "18–24 años", r: {}, lead: -4 },
+        { t: "25–29 años", r: {}, lead: 0 },
+        { t: "30–42 años", r: {}, lead: 3 },
+        { t: "43–50 años", r: {}, lead: 2 },
+        { t: "Más de 50 años", r: {}, lead: 0 },
+      ]},
+      { key: "objetivo", q: "¿Tu objetivo principal ahorita?", type: "filas", ops: [
+        { t: "Bajar grasa porque me siento tapado", r: { definir: 1, recomp: 1 }, lead: 0 },
+        { t: "Ganar músculo porque me veo flaco o sin forma", r: { subir: 2 }, lead: 0 },
+        { t: "Bajar grasa y ganar músculo al mismo tiempo", r: { recomp: 2 }, lead: 2 },
+        { t: "Recuperar control, energía y verme mejor", r: { recomp: 1, sistema: 1 }, lead: 2 },
+        { t: "No estoy seguro, por eso hago el diagnóstico", r: { sistema: 1 }, lead: 0 },
+      ]},
+      { key: "experiencia", q: "¿Cuánto llevas entrenando constante?", type: "filas", ops: [
+        { t: "Apenas voy empezando", r: { subir: 1, sistema: 1 }, lead: 0 },
+        { t: "Menos de 6 meses", r: { subir: 1 }, lead: 0 },
+        { t: "Entre 6 meses y 1 año", r: { recomp: 1 }, lead: 0 },
+        { t: "Más de 1 año, pero con muchas pausas", r: { sistema: 2 }, lead: 0 },
+        { t: "Más de 1 año constante", r: { definir: 1, recomp: 1 }, lead: 0 },
+      ]},
+      { key: "dias", q: "¿Cuántos días reales puedes entrenar?", type: "filas", ops: [
+        { t: "2 días", r: { sistema: 1 }, lead: 0 },
+        { t: "3 días", r: {}, lead: 0 },
+        { t: "4 días", r: {}, lead: 0 },
+        { t: "5 días o más", r: { definir: 1 }, lead: 0 },
+        { t: "Depende mucho de mi semana", r: { sistema: 2 }, lead: 0 },
+      ]},
+      { key: "obstaculo", q: "¿Qué te cuesta más ahorita?", type: "filas", ops: [
+        { t: "Saber qué objetivo elegir", r: { sistema: 1 }, lead: 0 },
+        { t: "Ser constante con el entrenamiento", r: { sistema: 2 }, lead: 2 },
+        { t: "Comer de forma ordenada", r: { sistema: 1 }, lead: 2 },
+        { t: "Ver cambios aunque entreno", r: { recomp: 1 }, lead: 2 },
+        { t: "No abandonar cuando se complica la semana", r: { sistema: 2 }, lead: 3 },
+      ]},
+      { key: "ocupacion", q: "¿A qué te dedicas?", type: "filas", ops: [
+        { t: "Estudio o apenas estoy empezando laboralmente", r: {}, lead: 0 },
+        { t: "Trabajo con horarios normales", r: {}, lead: 0 },
+        { t: "Soy profesionista", r: {}, lead: 3 },
+        { t: "Soy emprendedor / dueño de negocio", r: {}, lead: 3 },
+        { t: "Tengo un puesto demandante o de mucha responsabilidad", r: { sistema: 1 }, lead: 3 },
+      ]},
+      { key: "necesidad", q: "¿Qué es lo que MÁS necesitas que te resuelvan ya?", type: "filas", ops: [
+        { t: "Saber exactamente QUÉ y CUÁNTO comer para mi objetivo", r: { sistema: 1 }, lead: 2 },
+        { t: "Una rutina lista: saber QUÉ entrenar cada día, sin inventarle", r: {}, lead: 1 },
+        { t: "Saber CÓMO hacer los ejercicios con técnica correcta", r: {}, lead: 0 },
+        { t: "Saber cómo PROGRESAR cuando me estanco (cargas, bloques, cambios de rutina)", r: { recomp: 1 }, lead: 1 },
+        { t: "TODO el sistema junto: comida + entrenamiento + orden, de una vez", r: { sistema: 2 }, lead: 3 },
+      ]},
+    ];
+
+    const VEREDICTOS = {
+      subir:   { titulo: 'Te toca <span class="rojo">volumen</span>', clave: "SUBIR",
+        texto: "Tu prioridad no es definir: primero construye músculo con comida ordenada, para que cuando bajes grasa tengas algo que mostrar." },
+      definir: { titulo: 'Te toca <span class="rojo">definición</span>', clave: "DEFINIR",
+        texto: "Ya traes base. Tu etapa es bajar la grasa que la tapa, de forma controlada, sin perder músculo ni rendimiento." },
+      recomp:  { titulo: 'Te toca <span class="rojo">recomposición</span>', clave: "RECOMP",
+        texto: "Ni volumen agresivo ni definición extrema: tu jugada es recomponer — perder grasa mientras construyes músculo, ciclando ambas etapas con orden." },
+    };
+
+    const PROGRAMAS = {
+      casa:    "ENTRENA EN CASA — El Ascenso de Aquiles (12 semanas)",
+      definir: "DEFINICIÓN — El Camino de Hércules (12 semanas)",
+      subir:   "VOLUMEN — El Legado de Zeus (22 semanas)",
+      recomp:  "EL SISTEMA LEGIONARIO — ciclo Definición + Volumen (Hércules + Zeus)",
+    };
+
+    /* ==========================================================
+       RUTAS — cada paso: QUÉ HACER (claro) + módulo real (referencia)
+       ========================================================== */
+    const RUTAS = {
+      definir: [
+        { a: "Mira el video de inicio: cómo funciona el programa", m: "Bienvenido a El Camino de Hércules", k: "intro" },
+        { a: "Desmonta los mitos que te tienen estancado", m: "Construyendo el Físico Soñado", k: "base" },
+        { a: "Aprende las reglas que sí generan músculo: reps, descansos, progresión", m: "Principios de Entrenamiento Indispensables", k: "base2" },
+        { a: "Calcula TUS calorías y arma tu plan de comida para definir (agresivo o flexible)", m: "Los Pilares Nutricionales — «Comienza tu plan AQUÍ»", k: "nutricion" },
+        { a: "Descarga tu rutina de 3, 4 o 5 días y entrena tal cual, sin inventarle", m: "Entrenamiento Élite Basado en Evidencia", k: "entreno" },
+        { a: "Cambia de rutina cuando tu cuerpo se acostumbre", m: "BONUS 2025: Nuevos Mesociclos", k: "despues" },
+        { a: "Compra solo los suplementos que sirven — y ahórrate los que no", m: "Guía de Suplementación Legionaria", k: "bonus" },
+        { a: "Cocina rico sin salirte del plan", m: "Recetario Anabólico Legionario", k: "bonus" },
+        { a: "Duerme mejor para definir más rápido", m: "De la Ciencia a tu Descanso", k: "bonus" },
+      ],
+      subir: [
+        { a: "Mira el video de inicio: cómo funciona el programa", m: "Bienvenido a El Legado de Zeus", k: "intro" },
+        { a: "Domina los 7 ejercicios fundamentales antes de cargar pesado", m: "Construyendo el Físico Soñado", k: "base" },
+        { a: "Aprende reps, descansos y calentamiento que sí construyen fuerza", m: "Principios de Entrenamiento Indispensables", k: "base2" },
+        { a: "Calcula TUS calorías de volumen limpio y arma tu plan para subir sin engordar", m: "«Manos a la obra» — Entrenamiento Científico", k: "nutricion" },
+        { a: "Ejecuta los 4 bloques de hipertrofia (3 semanas cada uno) con su Excel de cargas", m: "Hipertrofia Científica — Bloques 1 a 4", k: "entreno" },
+        { a: "Súbele a la fuerza con Powerbuilding y prueba tu 1RM real al final", m: "Rutinas de Powerbuilding — Bloques 1 a 4", k: "despues" },
+        { a: "Compra solo los suplementos que sirven — y ahórrate los que no", m: "Guía de Suplementación Legionaria", k: "bonus" },
+        { a: "Cocina rico sin salirte del plan", m: "Recetario Anabólico Legionario", k: "bonus" },
+        { a: "Duerme mejor para crecer más", m: "De la Ciencia a tu Descanso", k: "bonus" },
+      ],
+      casa: [
+        { a: "Mira el video de inicio: cómo funciona el programa", m: "Bienvenido a El Ascenso de Aquiles", k: "intro" },
+        { a: "Entiende qué cambia al entrenar en casa — y qué no cambia", m: "Entrenamiento Élite con Peso Corporal", k: "base" },
+        { a: "Calcula TUS calorías, decide definición o volumen, y arma tu plan de comida", m: "FASE 1 — «Manos a la obra»", k: "nutricion" },
+        { a: "Arranca tu rutina en casa desde tu nivel (0 a 3) y registra cada sesión", m: "Entrenamiento Élite FASE 1 — Maestría de Peso Corporal", k: "entreno" },
+        { a: "Sube de nivel (4 a 6) cuando domines los primeros", m: "FASE 2 — Niveles 4 a 6", k: "despues" },
+        { a: "Mezcla casa + mancuernas con el plan híbrido de 12 semanas extra", m: "FASE 2.5 — Entrenamiento Híbrido", k: "despues" },
+        { a: "Cierra con recomposición y llega al Nivel Máximo", m: "FASE 3 — Recomposición y Nivel Máximo", k: "despues" },
+        { a: "¿Dudas con un ejercicio? Mira su video de técnica correcta", m: "Bóveda de Video Tutoriales", k: "tecnica" },
+        { a: "Extras: cardio para acelerar, suplementos, recetas y sueño", m: "Bonus del programa", k: "bonus" },
+      ],
+      recomp: [
+        { a: "CICLO A — Destapa el músculo: 12 semanas bajando grasa", m: "El Camino de Hércules", k: "cicloA" },
+        { a: "Calcula tus calorías de definición y arma tu plan de comida", m: "Los Pilares Nutricionales", k: "nutriA" },
+        { a: "Entrena con tu rutina de 3, 4 o 5 días", m: "Entrenamiento Élite Basado en Evidencia", k: "entrenoA" },
+        { a: "CICLO B — Construye encima: músculo limpio en 22 semanas", m: "El Legado de Zeus", k: "cicloB" },
+        { a: "Recalcula tus calorías para volumen limpio", m: "«Manos a la obra» — Entrenamiento Científico", k: "nutriB" },
+        { a: "Ejecuta hipertrofia + powerbuilding por bloques con su Excel de cargas", m: "Hipertrofia Científica + Powerbuilding", k: "entrenoB" },
+        { a: "Extras en ambos ciclos: suplementos, recetas y sueño", m: "Bonus de ambos programas", k: "bonus" },
+      ],
+    };
+
+    /* ==========================================================
+       ESTADO
+       ========================================================== */
+    let idx = 0;
+    const resp = new Array(PREGUNTAS.length).fill(null);
+    let diag = null;
+    const $ = (id) => document.getElementById(id);
+    const fuente = new URLSearchParams(location.search).get('src') || 'directo';
+    const ROM = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+
+    $('folio-num').textContent = 'Nº ' + String(Math.floor(1000 + Math.random() * 9000));
+
+    const ver = (id) => {
+      document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+      $(id).classList.add('activa');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    function iniciar() { idx = 0; ver('p-quiz'); pinta(); }
+    function volverQuiz() { ver('p-quiz'); pinta(); }
+    function anterior() { if (idx > 0) { idx--; pinta(); } }
+
+    function pinta() {
+      const P = PREGUNTAS[idx], total = PREGUNTAS.length;
+      $('a-rom').textContent = ROM[idx];
+      $('a-total').textContent = ROM[total - 1];
+      const pct = Math.round((idx / total) * 100);
+      $('a-pct').textContent = pct + '%';
+      $('a-fill').style.width = pct + '%';
+      $('q-texto').textContent = P.q;
+      if (P.pista) { $('q-pista').textContent = P.pista; $('q-pista').style.display = 'block'; }
+      else $('q-pista').style.display = 'none';
+
+      const filas = $('filas'), casillas = $('casillas'), lamina = $('lamina');
+      filas.innerHTML = ''; casillas.innerHTML = '';
+
+      if (P.type === 'lamina') {
+        lamina.style.display = 'block'; casillas.style.display = 'grid'; filas.style.display = 'none';
+        CASILLAS_GRASA.forEach((c) => {
+          const b = document.createElement('button');
+          b.className = 'casilla'; b.textContent = c.t;
+          b.onclick = () => elegir({ t: c.t, v: c.v }, b);
+          casillas.appendChild(b);
+        });
+        if (P.extra) {
+          const b = document.createElement('button');
+          b.className = 'casilla ancha'; b.textContent = P.extra.t;
+          b.onclick = () => elegir({ t: P.extra.t, v: P.extra.v }, b);
+          casillas.appendChild(b);
+        }
+      } else {
+        lamina.style.display = 'none'; casillas.style.display = 'none'; filas.style.display = 'flex';
+        P.ops.forEach((o, i) => {
+          const b = document.createElement('button');
+          b.className = 'fila';
+          b.innerHTML = `<span class="rom">${ROM[i]}</span><span>${o.t}</span>`;
+          b.onclick = () => elegir(i, b);
+          filas.appendChild(b);
+        });
+      }
+      $('btn-volver').style.display = idx > 0 ? 'inline-block' : 'none';
+    }
+
+    function elegir(val, btn) {
+      resp[idx] = val;
+      btn.classList.add('elegida');
+      setTimeout(() => {
+        if (idx < PREGUNTAS.length - 1) { idx++; pinta(); }
+        else { calcula(); ver('p-registro'); }
+      }, 160);
+    }
+
+    /* ==========================================================
+       DIAGNÓSTICO
+       ========================================================== */
+    function calcula() {
+      const s = { subir: 0, recomp: 0, definir: 0, sistema: 0 };
+      let lead = 0;
+      const textos = [], enunciados = [], k = {};
+
+      PREGUNTAS.forEach((P, i) => {
+        enunciados.push(P.q);
+        const a = resp[i];
+        if (P.type === 'lamina') {
+          textos.push(a ? a.t : '');
+          k[P.key] = a || { t: '', v: null };
+          if (a && a.v == null) s.sistema += 1;
+        } else {
+          const o = P.ops[a];
+          textos.push(o ? o.t : '');
+          k[P.key] = o ? o.t : '';
+          if (o) { for (const key in o.r) s[key] += o.r[key]; lead += o.lead; }
+        }
+      });
+
+      const now = k.grasa_actual.v, goal = k.grasa_meta.v;
+      if (now != null) {
+        if (now >= 18) s.definir += 3;
+        else if (now > 12) s.recomp += 2;
+        else s.subir += 2;
+        if (goal != null) {
+          const gap = now - goal;
+          if (gap >= 5) s.definir += 2;
+          else if (gap >= 2) s.recomp += 1;
+          else if (gap <= 0 && now <= 12) s.subir += 1;
+        }
+      }
+
+      const etapa = ['definir', 'subir', 'recomp'].sort((a, b) => s[b] - s[a])[0];
+      const modoSistema = s.sistema >= 5;
+      const enCasa = k.lugar === 'En casa (sin equipo o con equipo básico)';
+      const programaKey = enCasa ? 'casa' : etapa;
+      const tier = lead >= 12 ? 'ICP_ALTO' : lead >= 6 ? 'ICP_MEDIO' : 'ICP_BAJO';
+
+      const pasos = [];
+      if (modoSistema) pasos.push('<b>Semana 0 — orden primero:</b> antes de tocar la rutina, fija tu estructura de comidas y tus horarios de entreno. Sin base, cualquier etapa se cae.');
+      const ne = { definir: 'Definición', subir: 'Volumen', recomp: 'Recomposición (arrancas por el bloque que marca tu brecha)' };
+      pasos.push(`<b>Empieza por:</b> el bloque de ${ne[etapa]}${enCasa ? ', en su versión de casa' : ''}. Ese es tu punto de entrada — no el primer video que veas.`);
+      const d = k.dias || '';
+      const plantilla = d.startsWith('2') || d.startsWith('3') ? 'la plantilla de 3 días'
+        : d.startsWith('4') ? 'la plantilla de 4 días'
+        : d.startsWith('5') ? 'la plantilla de 5 días'
+        : 'la plantilla de 3 días (tu semana cambia: mejor corta y cumplible)';
+      pasos.push(`<b>Frecuencia:</b> ${plantilla}. Cumplirla completa vale más que prometerte días que no van a pasar.`);
+      const ob = k.obstaculo || '';
+      if (ob.includes('Comer')) pasos.push('<b>Tu prioridad #1:</b> el módulo de comida ordenada. Tu entrenamiento ya jala — tu cocina es lo que te tiene estancado.');
+      else if (ob.includes('constante') || ob.includes('abandonar')) pasos.push('<b>Tu prioridad #1:</b> el Reto de Arranque de 7 días. Tu enemigo no es la rutina, es el abandono de la semana 2.');
+      else if (ob.includes('cambios')) pasos.push('<b>Tu prioridad #1:</b> registra tus métricas desde el día 1 (peso, fotos, medidas). Lo que no se mide se siente estancado aunque avance.');
+      else pasos.push('<b>Tu prioridad #1:</b> sigue el orden del programa tal cual. Tu confusión de etapa se acabó hoy.');
+      pasos.push('<b>Checkpoint día 14:</b> compara fotos y medidas contra tu punto de partida. Ahí se ajusta — no antes.');
+
+      diag = { etapa, programaKey, modoSistema, tier, leadScore: lead,
+        grasaActual: k.grasa_actual.t, grasaMeta: k.grasa_meta.t, lugar: k.lugar,
+        diasTxt: k.dias || '', obstaculoTxt: k.obstaculo || '', expTxt: k.experiencia || '', necesidadTxt: k.necesidad || '',
+        gNow: now, pasos, textos, enunciados };
+    }
+
+    /* ==========================================================
+       RUTA ETIQUETADA — cruza las respuestas con el índice real
+       ========================================================== */
+    function construyeRuta() {
+      const base = RUTAS[diag.programaKey];
+      const nec = diag.necesidadTxt;
+      let priTargets = [];
+      if (nec.includes('comer')) priTargets = ['nutricion', 'nutriA'];
+      else if (nec.includes('QUÉ entrenar')) priTargets = ['entreno', 'entrenoA'];
+      else if (nec.includes('técnica')) priTargets = diag.programaKey === 'casa' ? ['tecnica'] : ['base2', 'entrenoA'];
+      else if (nec.includes('PROGRESAR')) priTargets = diag.programaKey === 'recomp' ? ['entrenoB'] : ['despues'];
+      // "TODO el sistema junto" no marca módulo: su prioridad es la entrada completa
+      const keysEnRuta = base.map(x => x.k);
+      const priKeyFinal = priTargets.find(t => keysEnRuta.includes(t)) || null;
+      const items = [];
+      let nota = '';
+      let priMarcada = false;
+
+      if (diag.programaKey === 'recomp') {
+        const empiezaA = diag.gNow == null || diag.gNow > 15; // más grasa → primero definición
+        base.forEach((m) => {
+          let tag = '', clase = '', entrada = false;
+          if (m.k === 'cicloA') { tag = empiezaA ? '▶ Empieza aquí' : 'Ciclo 2'; clase = empiezaA ? 'roja' : ''; entrada = empiezaA; }
+          if (m.k === 'cicloB') { tag = empiezaA ? 'Ciclo 2' : '▶ Empieza aquí'; clase = empiezaA ? '' : 'roja'; entrada = !empiezaA; }
+          if (m.k === 'nutriA' || m.k === 'nutriB') tag = 'Semana 1';
+          if (m.k === 'entrenoA' || m.k === 'entrenoB') tag = 'Semana 1-2';
+          if (m.k === 'bonus') tag = 'Bonus';
+          if (priKeyFinal && m.k === priKeyFinal && !priMarcada) {
+            tag = (tag ? tag + ' · ' : '') + '⚑ Tu prioridad';
+            if (!clase) clase = 'oro2';
+            priMarcada = true;
+          }
+          items.push({ a: m.a, mod: m.m, tag, clase, entrada });
+        });
+        nota = empiezaA
+          ? 'Tu brecha marca arrancar por DEFINICIÓN: primero destapas el músculo, luego construyes encima con Zeus.'
+          : 'Tu brecha marca arrancar por VOLUMEN: primero construyes base con Zeus, la definición viene después.';
+      } else {
+        base.forEach((m) => {
+          let tag = '', clase = '', entrada = false;
+          if (m.k === 'intro') tag = 'Día 1';
+          if (m.k === 'nutricion') { tag = '▶ Empieza aquí'; clase = 'roja'; entrada = true; }
+          if (m.k === 'entreno') tag = 'Semana 1-2';
+          if (m.k === 'despues') tag = 'Después';
+          if (m.k === 'tecnica') tag = 'Consulta siempre';
+          if (m.k === 'bonus') tag = 'Bonus';
+
+          if (priKeyFinal && m.k === priKeyFinal && !priMarcada) {
+            tag = (tag ? tag + ' · ' : '') + '⚑ Tu prioridad';
+            if (!clase) clase = 'oro2';
+            priMarcada = true;
+          }
+          items.push({ a: m.a, mod: m.m, tag, clase, entrada });
+        });
+        const d = diag.diasTxt;
+        if (diag.programaKey === 'definir') {
+          const plan = d.startsWith('5') ? '5 días' : d.startsWith('4') ? '4 días' : '3 días';
+          nota = `Con tu disponibilidad, tu plantilla de arranque en Hércules es la de ${plan}.`;
+        }
+        if (diag.programaKey === 'subir' && (d.startsWith('2') || d.startsWith('3') || d.startsWith('Depende'))) {
+          nota = 'Zeus está diseñado a 5 días por semana. Con tu disponibilidad actual, planéalo antes de arrancar — o el diagnóstico te acomoda mejor subiendo tus días.';
+        }
+        if (diag.programaKey === 'casa') {
+          const nivel = diag.expTxt.includes('Apenas') ? 'Nivel 0' : 'Nivel 1';
+          nota = `Requiere equipo mínimo (mancuernas, ligas o barra de dominadas). Tu punto de entrada en la Maestría de Peso Corporal: ${nivel}.`;
+        }
+      }
+      return { items, nota };
+    }
+
+    /* ==========================================================
+       REGISTRO + ENVÍO (Supabase ∥ Klaviyo ∥ Sheets)
+       ========================================================== */
+    function sellar() {
+      const nombre = $('i-nombre').value.trim();
+      const email = $('i-email').value.trim();
+      const waRaw = $('i-wa').value.replace(/\D/g, '');
+      let ok = true;
+      $('c-nombre').classList.toggle('mal', !nombre); ok = ok && !!nombre;
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      $('c-email').classList.toggle('mal', !emailOk); ok = ok && emailOk;
+      const waOk = waRaw === '' || waRaw.length === 10 || (waRaw.length === 12 && waRaw.startsWith('52'));
+      $('c-wa').classList.toggle('mal', !waOk); ok = ok && waOk;
+      if (!ok) return;
+
+      const btn = $('btn-sellar');
+      btn.disabled = true; btn.textContent = 'Sellando…';
+
+      const whatsapp = waRaw ? (waRaw.length === 10 ? '+52' + waRaw : '+' + waRaw) : '';
+      const p = {
+        nombre, email, whatsapp,
+        etapa: diag.etapa, programa: PROGRAMAS[diag.programaKey],
+        tier: diag.tier, lead_score: diag.leadScore,
+        grasa_actual: diag.grasaActual, grasa_meta: diag.grasaMeta,
+        lugar: diag.lugar, fuente, modo: CONFIG.MODE, respuestas: diag.textos,
+      };
+
+      const envios = CONFIG.EDGE_FUNCTION_URL
+        ? [guardaBackend(p), guardaSheets(p)]                       // ruta backend (recomendada)
+        : [guardaSupabase(p), guardaKlaviyo(p), guardaSheets(p)];   // ruta directa (fallback)
+      Promise.allSettled(envios).then((r) => {
+        const alguno = r.some(x => x.status === 'fulfilled' && x.value === true);
+        const n = $('estado-guardado');
+        if (alguno) { n.textContent = '✓ Expediente guardado — revisa tu correo'; n.classList.add('ok'); }
+        else { n.textContent = 'No se pudo guardar en línea · toma captura de tu veredicto'; }
+      });
+
+      pintaVeredicto();
+      iniciarForja();
+      btn.disabled = false; btn.textContent = 'Ver mi veredicto';
+    }
+
+    /* ==========================================================
+       FORJA — narra los cálculos REALES antes de revelar
+       ========================================================== */
+    function iniciarForja() {
+      const reduce = typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) { ver('p-veredicto'); return; }
+
+      const brecha = (diag.grasaActual && diag.grasaMeta)
+        ? `Analizando tu brecha de grasa: ${diag.grasaActual} → ${diag.grasaMeta}`
+        : 'Registrando tu punto de partida';
+      const lineas = [
+        brecha,
+        `Cruzando tus días reales de entrenamiento: ${diag.diasTxt || '—'}`,
+        `Cruzando lo que necesitas resolver: ${(diag.necesidadTxt || diag.obstaculoTxt || '—').toLowerCase()}`,
+        `Marcando tu punto de entrada en ${PROGRAMAS[diag.programaKey].split('—')[0].trim()}`,
+      ];
+      const cont = $('forja-lineas');
+      cont.innerHTML = lineas.map(l => `<div class="forja-linea"><span class="tick">✓</span><span>${l}</span></div>`).join('');
+      ver('p-forja');
+      requestAnimationFrame(() => { $('forja-fill').style.width = '100%'; });
+      const nodos = cont.querySelectorAll('.forja-linea');
+      nodos.forEach((n, i) => setTimeout(() => n.classList.add('viva'), 350 + i * 600));
+      setTimeout(() => ver('p-veredicto'), 350 + lineas.length * 600 + 500);
+    }
+
+    async function guardaBackend(p) {
+      const res = await fetch(CONFIG.EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(p),
+      });
+      if (!res.ok) { console.error('Backend:', res.status); return false; }
+      const data = await res.json().catch(() => ({}));
+      return data.ok === true;
+    }
+
+    async function guardaSupabase(p) {
+      if (!CONFIG.SUPABASE_URL || CONFIG.SUPABASE_URL.includes('TU-PROYECTO')) return false;
+      const c = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+      const { error } = await c.from('quiz_leads').insert({
+        nombre: p.nombre, email: p.email, whatsapp: p.whatsapp,
+        etapa: p.etapa, programa: p.programa, tier: p.tier, lead_score: p.lead_score,
+        grasa_actual: p.grasa_actual, grasa_meta: p.grasa_meta, lugar: p.lugar,
+        fuente: p.fuente, modo: p.modo, respuestas: p.respuestas,
+      });
+      if (error) { console.error('Supabase:', error); return false; }
+      return true;
+    }
+
+    async function guardaKlaviyo(p) {
+      if (!CONFIG.KLAVIYO_PUBLIC_KEY || CONFIG.KLAVIYO_PUBLIC_KEY.startsWith('TU_')) return false;
+      const attrs = {
+        email: p.email, first_name: p.nombre,
+        properties: {
+          etapa: p.etapa, programa: p.programa, tier: p.tier, lead_score: p.lead_score,
+          grasa_actual: p.grasa_actual, grasa_meta: p.grasa_meta, lugar: p.lugar,
+          fuente: p.fuente, quiz: 'expediente-legionario',
+        },
+      };
+      if (p.whatsapp) attrs.phone_number = p.whatsapp;
+      const body = { data: { type: 'subscription',
+        attributes: { profile: { data: { type: 'profile', attributes: attrs } } },
+        relationships: { list: { data: { type: 'list', id: CONFIG.KLAVIYO_LIST_ID } } } } };
+      const res = await fetch('https://a.klaviyo.com/client/subscriptions/?company_id=' + CONFIG.KLAVIYO_PUBLIC_KEY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'revision': '2024-10-15' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok && res.status !== 202) { console.error('Klaviyo:', res.status); return false; }
+      return true;
+    }
+
+    async function guardaSheets(p) {
+      if (!CONFIG.SHEETS_URL) return false;
+      await fetch(CONFIG.SHEETS_URL, {
+        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          fecha: new Date().toLocaleString('es-MX'),
+          resultado: p.etapa.toUpperCase(), etapa: p.etapa, palabra: VEREDICTOS[diag.etapa].clave,
+          leadScore: p.lead_score, tier: p.tier,
+          respuestas: [p.nombre, p.email, p.whatsapp, p.fuente].concat(p.respuestas),
+          preguntas: ['Nombre', 'Email', 'WhatsApp', 'Fuente'].concat(diag.enunciados),
+        }),
+      });
+      return true;
+    }
+
+    /* ==========================================================
+       VEREDICTO EN PANTALLA
+       ========================================================== */
+    function pintaVeredicto() {
+      const V = VEREDICTOS[diag.etapa];
+      $('sello-clave').textContent = V.clave;
+      $('v-titulo').innerHTML = V.titulo;
+      $('v-texto').textContent = V.texto;
+      $('v-indice').innerHTML = diag.pasos.map((p, i) =>
+        `<li><span class="n">${ROM[i]}</span><span>${p}</span></li>`).join('');
+
+      const ruta = construyeRuta();
+      $('ruta-titulo').textContent = 'Tu ruta en ' + PROGRAMAS[diag.programaKey].split('—')[0].trim();
+      $('ruta-lista').innerHTML = ruta.items.map(it =>
+        `<li${it.entrada ? ' class="entrada"' : ''}>${it.tag ? `<span class="tag ${it.clase}">${it.tag}</span>` : '<span class="tag fantasma">·</span>'}<span><span class="accion">${it.a}</span><span class="modulo">› En el programa: ${it.mod}</span></span></li>`
+      ).join('');
+      if (ruta.nota) { $('ruta-nota').textContent = ruta.nota; $('ruta-nota').style.display = 'block'; }
+      else $('ruta-nota').style.display = 'none';
+
+      const prog = PROGRAMAS[diag.programaKey];
+      const cta = $('v-cta');
+      if (CONFIG.MODE === 'lanzamiento') {
+        $('v-programa').innerHTML = `Tu programa asignado: <b>${prog}</b>.<br/>Se abre este jueves en la masterclass en vivo — reserva tu lugar:`;
+        cta.textContent = 'Reservar mi lugar';
+        cta.href = CONFIG.URLS.webinar;
+      } else {
+        $('v-programa').innerHTML = `Tu programa asignado: <b>${prog}</b>. Empieza hoy con tu Índice de Arranque:`;
+        cta.textContent = 'Empezar mi programa';
+        cta.href = CONFIG.URLS[diag.programaKey];
+      }
+      $('v-palabra').textContent = V.clave;
+      $('v-ig').href = CONFIG.URLS.instagram;
+      $('dm-bloque').style.display = CONFIG.MOSTRAR_DM ? '' : 'none';
+    }
+  </script>
+</body>
+</html>
