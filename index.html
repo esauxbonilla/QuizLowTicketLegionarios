@@ -330,7 +330,7 @@
        ========================================================== */
     const CONFIG = {
       // "lanzamiento" = CTA al registro del webinar · "evergreen" = CTA directo al checkout
-      MODE: "lanzamiento",
+      MODE: "evergreen",
 
       // true = muestra la caja "manda tu palabra/foto por DM" en el veredicto.
       // Apagado por ahora para no recibir mensajes; se prende cambiando a true.
@@ -431,11 +431,11 @@
     ];
 
     const VEREDICTOS = {
-      subir:   { titulo: 'Te toca <span class="rojo">volumen</span>', clave: "SUBIR",
+      subir:   { titulo: 'Tu etapa ahora es enfocarte en <span class="rojo">volumen</span>', clave: "SUBIR",
         texto: "Tu prioridad no es definir: primero construye músculo con comida ordenada, para que cuando bajes grasa tengas algo que mostrar." },
-      definir: { titulo: 'Te toca <span class="rojo">definición</span>', clave: "DEFINIR",
+      definir: { titulo: 'Tu etapa ahora es enfocarte en <span class="rojo">definición</span>', clave: "DEFINIR",
         texto: "Ya traes base. Tu etapa es bajar la grasa que la tapa, de forma controlada, sin perder músculo ni rendimiento." },
-      recomp:  { titulo: 'Te toca <span class="rojo">recomposición</span>', clave: "RECOMP",
+      recomp:  { titulo: 'Tu etapa ahora es enfocarte en <span class="rojo">recomposición</span>', clave: "RECOMP",
         texto: "Ni volumen agresivo ni definición extrema: tu jugada es recomponer — perder grasa mientras construyes músculo, ciclando ambas etapas con orden." },
     };
 
@@ -857,7 +857,7 @@
         cta.textContent = 'Reservar mi lugar';
         cta.href = CONFIG.URLS.webinar;
       } else {
-        $('v-programa').innerHTML = `Tu programa asignado: <b>${prog}</b>. Empieza hoy con tu Índice de Arranque:`;
+        $('v-programa').innerHTML = `Tu programa asignado: <b>${prog}</b>.<br/>Solo hay <b>15 cupos disponibles</b> y puedes pagarlo <b>hasta en 3 cuotas</b>:`;
         cta.textContent = 'Empezar mi programa';
         cta.href = CONFIG.URLS[diag.programaKey];
       }
